@@ -336,25 +336,36 @@ const App = () => {
       </section>
 
       <footer className="border-t border-border/60 bg-slate-950 py-10 text-slate-300">
-        <div className="container flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="container flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-sm font-semibold text-white">Mentora Edutors</p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="text-xs text-slate-400">
               Structured learning support for classes 6–12 and competitive prep.
             </p>
           </div>
 
-          <nav className="flex flex-wrap items-center gap-5 text-sm">
-            {footerLinks.map((link) => (
-              <a
-                key={link}
-                href="#"
-                className="transition-colors duration-300 hover:text-white"
-              >
-                {link}
-              </a>
-            ))}
-          </nav>
+          <div className="flex flex-col items-start gap-4 md:items-end">
+            <Link href="/" aria-label="Mentora Edutors homepage">
+              <Image
+                src="/mentora-logo.png"
+                alt="Mentora Edutors"
+                width={420}
+                height={110}
+                className="h-9 w-auto object-contain"
+              />
+            </Link>
+
+            <nav className="flex flex-wrap items-center gap-5 text-sm">
+              {footerLinks.map((link) => (
+                <a
+                  key={link}
+                  href="#"
+                  className="transition-colors duration-300 hover:text-white"
+                >
+                  {link}
+                </a>
+              ))}
+            </nav>
+          </div>
         </div>
       </footer>
     </main>
