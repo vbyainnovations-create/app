@@ -132,6 +132,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Implemented full static homepage with hero, smooth-scroll How Mentora Works CTA, placeholder Book Free Intro Session CTA, programs, trust, tutor callout, and footer links. Awaiting user direction for UI testing."
+      - working: "NA"
+        agent: "main"
+        comment: "Integrated official branding assets: navbar logo image (left aligned, home link), footer logo above footer links with professional contrast treatment, and favicon symbol via metadata icons. Other homepage sections unchanged. Awaiting user decision on frontend test run."
 
 metadata:
   created_by: "main_agent"
