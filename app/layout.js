@@ -10,6 +10,11 @@ export const metadata = {
   title: "Mentora Edutors | Structured Home Learning for Classes 6–12",
   description:
     "Personalised home tutoring and competitive prep (JEE, NEET, CUET) for students from Class 6 to 12.",
+  icons: {
+    icon: "/mentora-symbol-blue.jpeg",
+    shortcut: "/mentora-symbol-blue.jpeg",
+    apple: "/mentora-symbol-blue.jpeg",
+  },
 };
 
 const App = ({ children }) => {
