@@ -99,12 +99,20 @@ const App = () => {
     <main className="bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
         <div className="container flex h-16 items-center justify-between">
-          <a
-            href="#"
-            className="text-lg font-semibold tracking-tight text-slate-900 transition-colors hover:text-slate-700"
+          <Link
+            href="/"
+            aria-label="Mentora Edutors homepage"
+            className="inline-flex items-center"
           >
-            Mentora Edutors
-          </a>
+            <Image
+              src="/mentora-logo.png"
+              alt="Mentora Edutors"
+              width={460}
+              height={120}
+              priority
+              className="h-10 w-auto object-contain"
+            />
+          </Link>
 
           <div className="hidden items-center gap-6 md:flex">
             <a
