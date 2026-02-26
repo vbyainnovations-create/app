@@ -11,9 +11,9 @@ export const metadata = {
   description:
     "Personalised home tutoring and competitive prep (JEE, NEET, CUET) for students from Class 6 to 12.",
   icons: {
-    icon: "/mentora-symbol-blue.jpeg",
-    shortcut: "/mentora-symbol-blue.jpeg",
-    apple: "/mentora-symbol-blue.jpeg",
+    icon: "/mentora-favicon.png",
+    shortcut: "/mentora-favicon.png",
+    apple: "/mentora-favicon.png",
   },
 };
 
