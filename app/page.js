@@ -344,7 +344,11 @@ const App = () => {
           </div>
 
           <div className="flex flex-col items-start gap-4 md:items-end">
-            <Link href="/" aria-label="Mentora Edutors homepage">
+            <Link
+              href="/"
+              aria-label="Mentora Edutors homepage"
+              className="rounded-md border border-white/20 bg-white/95 px-2 py-1"
+            >
               <Image
                 src="/mentora-logo-clean.png"
                 alt="Mentora Edutors"
