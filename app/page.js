@@ -105,7 +105,7 @@ const App = () => {
             className="inline-flex items-center"
           >
             <Image
-              src="/mentora-logo.png"
+              src="/mentora-logo-clean.png"
               alt="Mentora Edutors"
               width={460}
               height={120}
@@ -346,7 +346,7 @@ const App = () => {
           <div className="flex flex-col items-start gap-4 md:items-end">
             <Link href="/" aria-label="Mentora Edutors homepage">
               <Image
-                src="/mentora-logo.png"
+                src="/mentora-logo-clean.png"
                 alt="Mentora Edutors"
                 width={420}
                 height={110}
