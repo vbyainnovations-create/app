@@ -120,6 +120,21 @@ backend:
         agent: "testing"
         comment: "Backend testing completed successfully. Tested all HTTP methods (GET, POST, PUT, PATCH, DELETE) across multiple API paths. All requests return proper 404 JSON responses with expected message. No runtime errors or server crashes detected. Created /app/backend_test.py for comprehensive API testing (25 test cases passed). Route behaves correctly for static homepage phase."
 
+  - task: "Supabase intro request insert API"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added POST /api/intro-requests handler in catch-all route. It validates required fields and inserts into Supabase table intro_requests using NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY. Needs backend testing verification."
+      - working: true
+        agent: "testing"
+        comment: "Backend testing completed successfully. Comprehensive testing of POST /api/intro-requests API with 9 test cases passed. Valid payload (parent_name, phone, class_level, subject, topic_cluster, area) returns 201 status with success message. Missing fields properly return 400 status with error message. Invalid JSON handled correctly with 500 status. Non-matching API paths preserve catch-all behavior returning 404. No runtime errors or server crashes detected. Supabase integration working correctly."
+
 frontend:
   - task: "Mentora homepage UI sections and CTA behavior"
     implemented: true
@@ -136,10 +151,22 @@ frontend:
         agent: "main"
         comment: "Integrated official branding assets: navbar logo image (left aligned, home link), footer logo above footer links with professional contrast treatment, and favicon symbol via metadata icons. Other homepage sections unchanged. Awaiting user decision on frontend test run."
 
+  - task: "Booking wizard frontend submission wiring"
+    implemented: true
+    working: "NA"
+    file: "app/book/page.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Wired Step 5 submit button to call backend POST /api/intro-requests while keeping UI layout unchanged and preserving success confirmation state after successful response."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: false
 
 test_plan:
@@ -153,3 +180,7 @@ agent_communication:
     message: "Backend testing agent should validate API route behavior for common HTTP methods and ensure no runtime errors. Frontend testing is intentionally deferred pending user confirmation."
   - agent: "testing"
     message: "Backend testing completed successfully. Catch-all API route working perfectly - all 25 test cases passed across 5 HTTP methods and 5 different API paths. Created comprehensive backend_test.py for future testing. No critical issues found, no runtime errors, proper JSON responses with 404 status as expected for static homepage phase. Ready for main agent to summarize and finish."
+  - agent: "main"
+    message: "Please test POST /api/intro-requests Supabase insertion flow with valid payload and invalid payload. Verify status codes, response shape, and confirm no runtime/server errors for this new backend integration."
+  - agent: "testing"
+    message: "Supabase intro requests API testing completed successfully. All 9 comprehensive test cases passed including valid payload (201 status), missing fields validation (400 status), invalid JSON handling (500 status), and catch-all behavior preservation (404 status). No runtime errors or server crashes. Backend implementation working correctly with proper Supabase integration."

@@ -63,6 +63,7 @@ const App = () => {
     location: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableSubjects = useMemo(() => {
     return subjectMap[selectedClassType] || [];
@@ -99,11 +100,42 @@ const App = () => {
     setSelectedCluster("");
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!canMoveNext()) return;
 
     if (currentStep === 5) {
-      setIsSubmitted(true);
+      try {
+        setIsSubmitting(true);
+
+        const response = await fetch("/api/intro-requests", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            parent_name: formData.parentName,
+            phone: formData.phoneNumber,
+            class_level: classOptions.find((item) => item.id === selectedClassType)
+              ?.label,
+            subject: selectedSubject,
+            topic_cluster: selectedCluster,
+            area: formData.location,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to submit booking request");
+        }
+
+        setIsSubmitted(true);
+      } catch (error) {
+        window.alert(
+          "We couldn't submit your request right now. Please try again."
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+
       return;
     }
 
@@ -352,7 +384,7 @@ const App = () => {
               <Button
                 type="button"
                 onClick={handleNext}
-                disabled={!canMoveNext()}
+                disabled={!canMoveNext() || isSubmitting}
                 className="bg-slate-900 hover:bg-slate-800"
               >
                 {currentStep === 5 ? "Submit Booking Request" : "Continue"}
