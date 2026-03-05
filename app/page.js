@@ -98,7 +98,7 @@ const App = () => {
   return (
     <main className="bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container flex h-16 items-center justify-between gap-3 px-4 sm:gap-4 sm:px-5 md:px-8">
           <Link
             href="/"
             aria-label="Mentora Edutors homepage"
@@ -110,7 +110,7 @@ const App = () => {
               width={460}
               height={120}
               priority
-              className="h-10 w-auto object-contain"
+              className="h-9 w-auto min-w-0 object-contain sm:h-10"
             />
           </Link>
 
@@ -137,7 +137,7 @@ const App = () => {
 
           <Button
             variant="outline"
-            className="border-emerald-700/30 text-emerald-800 transition-all duration-300 hover:border-emerald-700 hover:bg-emerald-50"
+            className="ml-2 shrink-0 border-emerald-700/30 px-3 text-xs text-emerald-800 transition-all duration-300 hover:border-emerald-700 hover:bg-emerald-50 sm:ml-0 sm:px-4 sm:text-sm"
             disabled
           >
             Book Free Intro Session
