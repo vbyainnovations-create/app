@@ -8,7 +8,7 @@ const fetchIntroRequests = async () => {
     return [];
   }
 
-  const url = `${supabaseUrl}/rest/v1/intro_requests?select=id,parent_name,phone,class_level,subject,topic_cluster,area,created_at,status&order=created_at.desc`;
+  const url = `${supabaseUrl}/rest/v1/intro_requests?select=id,parent_name,phone,class_level,subject,topic_cluster,area,assigned_tutor,created_at,status&order=created_at.desc`;
 
   try {
     const response = await fetch(url, {

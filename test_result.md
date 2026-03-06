@@ -137,6 +137,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "Extended /api/intro-requests backend integration with GET listing support for admin table data, PATCH status update support, and POST default status='New'. Needs backend re-testing for new paths and status update behavior."
+      - working: "NA"
+        agent: "main"
+        comment: "Further extended backend PATCH logic to support assigned_tutor updates and flexible payload updates (status and/or assigned_tutor), plus GET now includes assigned_tutor for admin dashboard."
 
 frontend:
   - task: "Mentora homepage UI sections and CTA behavior"
@@ -178,10 +181,22 @@ frontend:
         agent: "main"
         comment: "Upgraded /admin table with Status column, color-coded badge map, per-row dropdown (New/Contacted/Tutor Assigned/Completed/Closed), and client-side PATCH update call to backend API while keeping layout responsive and sticky header." 
 
+  - task: "Admin dashboard tutor assignment UI"
+    implemented: true
+    working: "NA"
+    file: "app/admin/page.js, components/admin-requests-table.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added Assigned Tutor column with Assign Tutor button when empty, tutor badge after assignment, reassignment dropdown with placeholder tutor options, and responsive clean table layout without changing existing status system."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 4
+  test_sequence: 5
   run_ui: false
 
 test_plan:
@@ -202,3 +217,6 @@ agent_communication:
     message: "Supabase intro requests API testing completed successfully. All 9 comprehensive test cases passed including valid payload (201 status), missing fields validation (400 status), invalid JSON handling (500 status), and catch-all behavior preservation (404 status). No runtime errors or server crashes. Backend implementation working correctly with proper Supabase integration."
   - agent: "main"
     message: "Please retest backend for updated /api/intro-requests endpoints: GET list with status/id, POST default status='New', PATCH status update validation and persistence for allowed statuses. Confirm unsupported paths still return 404 and no runtime errors."
+
+  - agent: "main"
+    message: "Please backend-test tutor assignment enhancements: GET /api/intro-requests should include assigned_tutor field, PATCH should support assigned_tutor updates (including reassignment) and still support status updates. Validate invalid tutor values fail, and non-matching paths still return 404 with no runtime errors."

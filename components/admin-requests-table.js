@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const statusOptions = [
   "New",
@@ -8,6 +9,13 @@ const statusOptions = [
   "Tutor Assigned",
   "Completed",
   "Closed",
+];
+
+const tutorOptions = [
+  "Aman Sharma",
+  "Ishita Mehta",
+  "Rahul Verma",
+  "Veena Gupta",
 ];
 
 const statusBadgeMap = {
@@ -34,15 +42,54 @@ const getSafeStatus = (status) => {
   return statusOptions.includes(status) ? status : "New";
 };
 
+const getSafeTutor = (assignedTutor) => {
+  return typeof assignedTutor === "string" ? assignedTutor.trim() : "";
+};
+
 const App = ({ initialRequests }) => {
   const [requests, setRequests] = useState(
     (initialRequests || []).map((request) => ({
       ...request,
       status: getSafeStatus(request?.status),
+      assigned_tutor: getSafeTutor(request?.assigned_tutor),
     }))
   );
 
-  const [updatingId, setUpdatingId] = useState("");
+  const [updatingRowId, setUpdatingRowId] = useState("");
+  const [assignTutorEditorRow, setAssignTutorEditorRow] = useState("");
+
+  const updateRequestRow = async (id, payload, rollbackState) => {
+    const idValue = String(id);
+
+    try {
+      setUpdatingRowId(idValue);
+
+      const response = await fetch("/api/intro-requests", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          ...payload,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update request");
+      }
+    } catch {
+      setRequests((prev) =>
+        prev.map((request) =>
+          String(request?.id) === idValue ? { ...request, ...rollbackState } : request
+        )
+      );
+
+      window.alert("Unable to update the request. Please try again.");
+    } finally {
+      setUpdatingRowId("");
+    }
+  };
 
   const handleStatusChange = async (id, nextStatus) => {
     const idValue = String(id);
@@ -58,42 +105,41 @@ const App = ({ initialRequests }) => {
       )
     );
 
-    try {
-      setUpdatingId(idValue);
+    await updateRequestRow(id, { status: nextStatus }, { status: previousStatus });
+  };
 
-      const response = await fetch("/api/intro-requests", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id,
-          status: nextStatus,
-        }),
-      });
+  const handleTutorChange = async (id, nextTutor) => {
+    const idValue = String(id);
+    const cleanTutor = typeof nextTutor === "string" ? nextTutor.trim() : "";
 
-      if (!response.ok) {
-        throw new Error("Failed to update status");
-      }
-    } catch {
-      setRequests((prev) =>
-        prev.map((request) =>
-          String(request?.id) === idValue
-            ? { ...request, status: previousStatus }
-            : request
-        )
-      );
-
-      window.alert("Unable to update status. Please try again.");
-    } finally {
-      setUpdatingId("");
+    if (!cleanTutor) {
+      return;
     }
+
+    const previousTutor =
+      requests.find((request) => String(request?.id) === idValue)?.assigned_tutor || "";
+
+    setRequests((prev) =>
+      prev.map((request) =>
+        String(request?.id) === idValue
+          ? { ...request, assigned_tutor: cleanTutor }
+          : request
+      )
+    );
+
+    setAssignTutorEditorRow("");
+
+    await updateRequestRow(
+      id,
+      { assigned_tutor: cleanTutor },
+      { assigned_tutor: previousTutor }
+    );
   };
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="min-w-[1120px] w-full border-collapse">
+        <table className="min-w-[1260px] w-full border-collapse">
           <thead className="bg-slate-50">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -115,6 +161,9 @@ const App = ({ initialRequests }) => {
                 Area
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Assigned Tutor
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                 Status
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -126,6 +175,11 @@ const App = ({ initialRequests }) => {
             {requests?.length > 0 ? (
               requests.map((request, index) => {
                 const status = getSafeStatus(request?.status);
+                const assignedTutor = getSafeTutor(request?.assigned_tutor);
+                const hasTutor = Boolean(assignedTutor);
+                const rowId = String(request?.id);
+                const isUpdatingRow = updatingRowId === rowId;
+                const showTutorSelect = hasTutor || assignTutorEditorRow === rowId;
 
                 return (
                   <tr
@@ -151,6 +205,44 @@ const App = ({ initialRequests }) => {
                       {request?.area || "—"}
                     </td>
                     <td className="px-4 py-3">
+                      <div className="flex min-w-[230px] flex-col gap-2">
+                        {hasTutor ? (
+                          <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            {assignedTutor}
+                          </span>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setAssignTutorEditorRow(rowId)}
+                            className="w-fit border-slate-300 text-xs text-slate-700"
+                            disabled={isUpdatingRow}
+                          >
+                            Assign Tutor
+                          </Button>
+                        )}
+
+                        {showTutorSelect && (
+                          <select
+                            value={assignedTutor || ""}
+                            onChange={(event) =>
+                              handleTutorChange(request?.id, event.target.value)
+                            }
+                            disabled={isUpdatingRow}
+                            className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 focus:border-slate-400 focus:outline-none"
+                          >
+                            <option value="">Select tutor</option>
+                            {tutorOptions.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span
                           className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${statusBadgeMap[status]}`}
@@ -162,7 +254,7 @@ const App = ({ initialRequests }) => {
                           onChange={(event) =>
                             handleStatusChange(request?.id, event.target.value)
                           }
-                          disabled={updatingId === String(request?.id)}
+                          disabled={isUpdatingRow}
                           className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 focus:border-slate-400 focus:outline-none"
                         >
                           {statusOptions.map((option) => (
@@ -182,7 +274,7 @@ const App = ({ initialRequests }) => {
             ) : (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="px-4 py-10 text-center text-sm text-slate-500"
                 >
                   No intro session requests found.

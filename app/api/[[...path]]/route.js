@@ -33,6 +33,13 @@ const statusOptions = [
   "Closed",
 ];
 
+const tutorOptions = [
+  "Aman Sharma",
+  "Ishita Mehta",
+  "Rahul Verma",
+  "Veena Gupta",
+];
+
 export async function GET(request, { params }) {
   const pathSegments = getPathSegments(params);
 
@@ -49,7 +56,7 @@ export async function GET(request, { params }) {
 
       const { supabaseUrl, serviceRoleKey } = config;
       const response = await fetch(
-        `${supabaseUrl}/rest/v1/intro_requests?select=id,parent_name,phone,class_level,subject,topic_cluster,area,created_at,status&order=created_at.desc`,
+        `${supabaseUrl}/rest/v1/intro_requests?select=id,parent_name,phone,class_level,subject,topic_cluster,area,assigned_tutor,created_at,status&order=created_at.desc`,
         {
           method: "GET",
           headers: {
@@ -203,17 +210,44 @@ export async function PATCH(request, { params }) {
       const payload = await request.json();
       const id = payload?.id;
       const status = payload?.status?.trim?.() || "";
+      const assignedTutorRaw = payload?.assigned_tutor;
+      const assignedTutor =
+        typeof assignedTutorRaw === "string" ? assignedTutorRaw.trim() : "";
 
-      if (!id || !status) {
+      if (!id) {
         return NextResponse.json(
           { message: "Missing required fields." },
           { status: 400 }
         );
       }
 
-      if (!statusOptions.includes(status)) {
+      const updatePayload = {};
+
+      if (status) {
+        if (!statusOptions.includes(status)) {
+          return NextResponse.json(
+            { message: "Invalid status value." },
+            { status: 400 }
+          );
+        }
+
+        updatePayload.status = status;
+      }
+
+      if (Object.prototype.hasOwnProperty.call(payload, "assigned_tutor")) {
+        if (assignedTutor && !tutorOptions.includes(assignedTutor)) {
+          return NextResponse.json(
+            { message: "Invalid tutor value." },
+            { status: 400 }
+          );
+        }
+
+        updatePayload.assigned_tutor = assignedTutor || null;
+      }
+
+      if (!Object.keys(updatePayload).length) {
         return NextResponse.json(
-          { message: "Invalid status value." },
+          { message: "No valid update fields provided." },
           { status: 400 }
         );
       }
@@ -229,7 +263,7 @@ export async function PATCH(request, { params }) {
             "Content-Type": "application/json",
             Prefer: "return=representation",
           },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify(updatePayload),
         }
       );
 
