@@ -122,11 +122,11 @@ backend:
 
   - task: "Supabase intro request insert API"
     implemented: true
-    working: true
+    working: "NA"
     file: "app/api/[[...path]]/route.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -134,6 +134,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Backend testing completed successfully. Comprehensive testing of POST /api/intro-requests API with 9 test cases passed. Valid payload (parent_name, phone, class_level, subject, topic_cluster, area) returns 201 status with success message. Missing fields properly return 400 status with error message. Invalid JSON handled correctly with 500 status. Non-matching API paths preserve catch-all behavior returning 404. No runtime errors or server crashes detected. Supabase integration working correctly."
+      - working: "NA"
+        agent: "main"
+        comment: "Extended /api/intro-requests backend integration with GET listing support for admin table data, PATCH status update support, and POST default status='New'. Needs backend re-testing for new paths and status update behavior."
 
 frontend:
   - task: "Mentora homepage UI sections and CTA behavior"
@@ -163,14 +166,27 @@ frontend:
         agent: "main"
         comment: "Wired Step 5 submit button to call backend POST /api/intro-requests while keeping UI layout unchanged and preserving success confirmation state after successful response."
 
+  - task: "Admin dashboard status dropdown and badge UI"
+    implemented: true
+    working: "NA"
+    file: "app/admin/page.js, components/admin-requests-table.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Upgraded /admin table with Status column, color-coded badge map, per-row dropdown (New/Contacted/Tutor Assigned/Completed/Closed), and client-side PATCH update call to backend API while keeping layout responsive and sticky header." 
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 3
+  test_sequence: 4
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Supabase intro request insert API"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -184,3 +200,5 @@ agent_communication:
     message: "Please test POST /api/intro-requests Supabase insertion flow with valid payload and invalid payload. Verify status codes, response shape, and confirm no runtime/server errors for this new backend integration."
   - agent: "testing"
     message: "Supabase intro requests API testing completed successfully. All 9 comprehensive test cases passed including valid payload (201 status), missing fields validation (400 status), invalid JSON handling (500 status), and catch-all behavior preservation (404 status). No runtime errors or server crashes. Backend implementation working correctly with proper Supabase integration."
+  - agent: "main"
+    message: "Please retest backend for updated /api/intro-requests endpoints: GET list with status/id, POST default status='New', PATCH status update validation and persistence for allowed statuses. Confirm unsupported paths still return 404 and no runtime errors."

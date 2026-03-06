@@ -1,14 +1,4 @@
-const formatDateTime = (value) => {
-  if (!value) return "—";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return new Intl.DateTimeFormat("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-};
+import AdminRequestsTable from "@/components/admin-requests-table";
 
 const fetchIntroRequests = async () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -18,7 +8,7 @@ const fetchIntroRequests = async () => {
     return [];
   }
 
-  const url = `${supabaseUrl}/rest/v1/intro_requests?select=parent_name,phone,class_level,subject,topic_cluster,area,created_at&order=created_at.desc`;
+  const url = `${supabaseUrl}/rest/v1/intro_requests?select=id,parent_name,phone,class_level,subject,topic_cluster,area,created_at,status&order=created_at.desc`;
 
   try {
     const response = await fetch(url, {
@@ -69,78 +59,7 @@ const App = async ({ searchParams }) => {
       </header>
 
       <section className="container py-6 md:py-8">
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-[980px] w-full border-collapse">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Parent Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Phone
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Class Level
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Subject
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Topic Cluster
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Area
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Created At
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests?.length > 0 ? (
-                  requests.map((request, index) => (
-                    <tr
-                      key={`${request?.phone || "row"}-${request?.created_at || index}`}
-                      className="border-t border-slate-100"
-                    >
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        {request?.parent_name || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        {request?.phone || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        {request?.class_level || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        {request?.subject || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        {request?.topic_cluster || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        {request?.area || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-800">
-                        {formatDateTime(request?.created_at)}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-4 py-10 text-center text-sm text-slate-500"
-                    >
-                      No intro session requests found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <AdminRequestsTable initialRequests={requests} />
       </section>
     </main>
   );

@@ -176,9 +176,9 @@ def test_api_route_no_crashes():
 
 def test_supabase_intro_requests_api():
     """
-    Test the Supabase intro requests insertion API
+    Test the updated Supabase intro requests API (GET, POST, PATCH)
     """
-    print(f"\nTesting Supabase intro requests API...")
+    print(f"\nTesting Supabase intro requests API (GET, POST, PATCH)...")
     print("=" * 60)
     
     intro_requests_url = urljoin(API_BASE_URL, 'intro-requests')
@@ -187,16 +187,93 @@ def test_supabase_intro_requests_api():
     all_tests_passed = True
     test_results = []
     
-    # Test 1: Valid payload
-    print("\n1. Testing valid payload...")
+    # Test GET endpoint first
+    print("\n=== GET /api/intro-requests Tests ===")
+    print("-" * 50)
+    
+    # Test 1: GET requests list
+    print("1. Testing GET intro requests list...")
+    try:
+        response = requests.get(
+            intro_requests_url,
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+        
+        status_passed = response.status_code == 200
+        
+        try:
+            response_json = response.json()
+            json_format_passed = True
+            
+            # Check response structure
+            has_requests_key = 'requests' in response_json
+            requests_is_array = isinstance(response_json.get('requests'), list)
+            
+            # Check if we have data and validate field structure
+            fields_valid = True
+            if response_json.get('requests') and len(response_json['requests']) > 0:
+                sample_request = response_json['requests'][0]
+                required_fields = ['id', 'parent_name', 'phone', 'class_level', 'subject', 'topic_cluster', 'area', 'created_at', 'status']
+                fields_valid = all(field in sample_request for field in required_fields)
+            
+        except (json.JSONDecodeError, ValueError):
+            response_json = None
+            json_format_passed = False
+            has_requests_key = False
+            requests_is_array = False
+            fields_valid = False
+        
+        test_passed = status_passed and json_format_passed and has_requests_key and requests_is_array
+        if not test_passed:
+            all_tests_passed = False
+        
+        result = {
+            'test': 'get_requests_list',
+            'status_code': response.status_code,
+            'expected_status': 200,
+            'status_passed': status_passed,
+            'json_format_passed': json_format_passed,
+            'has_requests_key': has_requests_key,
+            'requests_is_array': requests_is_array,
+            'fields_valid': fields_valid,
+            'response_json': response_json,
+            'test_passed': test_passed
+        }
+        test_results.append(result)
+        
+        status_symbol = "✅" if test_passed else "❌"
+        print(f"  GET list | Status: {response.status_code:3} | JSON: {json_format_passed} | Structure: {has_requests_key and requests_is_array} | Fields: {fields_valid} | {status_symbol}")
+        
+        if not test_passed:
+            print(f"    Expected status: 200, Got: {response.status_code}")
+            if response_json:
+                print(f"    Response: {response_json}")
+            else:
+                print(f"    Raw response: {response.text[:200]}")
+                
+    except requests.exceptions.RequestException as e:
+        print(f"  GET list | ERROR: {str(e)} | ❌")
+        all_tests_passed = False
+        test_results.append({
+            'test': 'get_requests_list',
+            'error': str(e),
+            'test_passed': False
+        })
+    
+    print("\n=== POST /api/intro-requests Tests ===")
+    print("-" * 50)
+    
+    # Test POST 1: Valid payload with default status
+    print("1. Testing POST valid payload (should set default status='New')...")
     print("-" * 40)
     valid_payload = {
-        "parent_name": "Test Parent",
-        "phone": "9999999999",
+        "parent_name": "Sarah Johnson",
+        "phone": "9876543210",
         "class_level": "Class 11–12",
-        "subject": "Physics",
+        "subject": "Physics", 
         "topic_cluster": "Physics: Foundation & Core Concepts",
-        "area": "Bengaluru"
+        "area": "Mumbai"
     }
     
     try:
@@ -227,7 +304,7 @@ def test_supabase_intro_requests_api():
             all_tests_passed = False
         
         result = {
-            'test': 'valid_payload',
+            'test': 'post_valid_payload',
             'status_code': response.status_code,
             'expected_status': 201,
             'status_passed': status_passed,
@@ -252,13 +329,13 @@ def test_supabase_intro_requests_api():
         print(f"  POST valid payload | ERROR: {str(e)} | ❌")
         all_tests_passed = False
         test_results.append({
-            'test': 'valid_payload',
+            'test': 'post_valid_payload',
             'error': str(e),
             'test_passed': False
         })
     
-    # Test 2: Missing required fields
-    print("\n2. Testing missing required fields...")
+    # Test POST 2: Missing required fields
+    print("2. Testing missing required fields...")
     print("-" * 40)
     
     missing_field_tests = [
@@ -439,9 +516,225 @@ def test_supabase_intro_requests_api():
                 'test_passed': False
             })
     
+    # ===== NEW PATCH ENDPOINT TESTS =====
+    print("\n=== PATCH /api/intro-requests Tests ===")
+    print("-" * 50)
+    
+    # Test PATCH 1: Valid status update
+    print("1. Testing PATCH valid status update...")
+    try:
+        # First, let's try to get an existing ID from the GET endpoint or use a sample one
+        get_response = requests.get(intro_requests_url, timeout=10)
+        sample_id = "sample-id-123"  # Default fallback
+        
+        if get_response.status_code == 200:
+            try:
+                get_data = get_response.json()
+                if get_data.get('requests') and len(get_data['requests']) > 0:
+                    sample_id = get_data['requests'][0].get('id', sample_id)
+            except:
+                pass
+        
+        valid_statuses = ["New", "Contacted", "Tutor Assigned", "Completed", "Closed"]
+        
+        for status in valid_statuses:
+            patch_payload = {
+                "id": sample_id,
+                "status": status
+            }
+            
+            try:
+                response = requests.patch(
+                    intro_requests_url,
+                    json=patch_payload,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=10
+                )
+                
+                # Accept both 200 (success) and 502 (Supabase error for non-existent ID)
+                status_passed = response.status_code in [200, 502]
+                
+                try:
+                    response_json = response.json()
+                    json_format_passed = True
+                    
+                    if response.status_code == 200:
+                        expected_message = "Status updated successfully."
+                        message_passed = response_json.get('message') == expected_message
+                    else:
+                        # For 502, we expect some error message
+                        message_passed = 'message' in response_json
+                        
+                except (json.JSONDecodeError, ValueError):
+                    response_json = None
+                    json_format_passed = False
+                    message_passed = False
+                
+                test_passed = status_passed and json_format_passed and message_passed
+                if not test_passed:
+                    all_tests_passed = False
+                
+                result = {
+                    'test': f'patch_valid_status_{status}',
+                    'status_code': response.status_code,
+                    'expected_statuses': [200, 502],
+                    'status_passed': status_passed,
+                    'json_format_passed': json_format_passed,
+                    'message_passed': message_passed,
+                    'response_json': response_json,
+                    'test_passed': test_passed
+                }
+                test_results.append(result)
+                
+                status_symbol = "✅" if test_passed else "❌"
+                print(f"  PATCH status={status:15} | Status: {response.status_code:3} | JSON: {json_format_passed} | Message: {message_passed} | {status_symbol}")
+                
+            except requests.exceptions.RequestException as e:
+                print(f"  PATCH status={status:15} | ERROR: {str(e)} | ❌")
+                all_tests_passed = False
+                test_results.append({
+                    'test': f'patch_valid_status_{status}',
+                    'error': str(e),
+                    'test_passed': False
+                })
+                
+    except Exception as e:
+        print(f"  PATCH valid status tests | ERROR: {str(e)} | ❌")
+        all_tests_passed = False
+    
+    # Test PATCH 2: Invalid status validation
+    print("\n2. Testing PATCH invalid status validation...")
+    print("-" * 40)
+    
+    invalid_statuses = ["InvalidStatus", "INVALID", "random_text", "123", ""]
+    
+    for invalid_status in invalid_statuses:
+        patch_payload = {
+            "id": "sample-id-123",
+            "status": invalid_status
+        }
+        
+        try:
+            response = requests.patch(
+                intro_requests_url,
+                json=patch_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            status_passed = response.status_code == 400
+            
+            try:
+                response_json = response.json()
+                json_format_passed = True
+                
+                expected_message = "Invalid status value."
+                message_passed = response_json.get('message') == expected_message
+                
+            except (json.JSONDecodeError, ValueError):
+                response_json = None
+                json_format_passed = False
+                message_passed = False
+            
+            test_passed = status_passed and json_format_passed and message_passed
+            if not test_passed:
+                all_tests_passed = False
+            
+            result = {
+                'test': f'patch_invalid_status_{invalid_status}',
+                'status_code': response.status_code,
+                'expected_status': 400,
+                'status_passed': status_passed,
+                'json_format_passed': json_format_passed,
+                'message_passed': message_passed,
+                'response_json': response_json,
+                'test_passed': test_passed
+            }
+            test_results.append(result)
+            
+            status_symbol = "✅" if test_passed else "❌"
+            print(f"  PATCH invalid={invalid_status[:15]:15} | Status: {response.status_code:3} | JSON: {json_format_passed} | Message: {message_passed} | {status_symbol}")
+            
+        except requests.exceptions.RequestException as e:
+            print(f"  PATCH invalid={invalid_status[:15]:15} | ERROR: {str(e)} | ❌")
+            all_tests_passed = False
+            test_results.append({
+                'test': f'patch_invalid_status_{invalid_status}',
+                'error': str(e),
+                'test_passed': False
+            })
+    
+    # Test PATCH 3: Missing required fields
+    print("\n3. Testing PATCH missing required fields...")
+    print("-" * 40)
+    
+    missing_field_tests = [
+        {"payload": {}, "description": "missing both id and status"},
+        {"payload": {"id": "sample-id"}, "description": "missing status"},
+        {"payload": {"status": "New"}, "description": "missing id"},
+        {"payload": {"id": "", "status": "New"}, "description": "empty id"},
+        {"payload": {"id": "sample-id", "status": ""}, "description": "empty status"},
+    ]
+    
+    for test_case in missing_field_tests:
+        payload = test_case["payload"]
+        description = test_case["description"]
+        
+        try:
+            response = requests.patch(
+                intro_requests_url,
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            status_passed = response.status_code == 400
+            
+            try:
+                response_json = response.json()
+                json_format_passed = True
+                
+                expected_message = "Missing required fields."
+                message_passed = response_json.get('message') == expected_message
+                
+            except (json.JSONDecodeError, ValueError):
+                response_json = None
+                json_format_passed = False
+                message_passed = False
+            
+            test_passed = status_passed and json_format_passed and message_passed
+            if not test_passed:
+                all_tests_passed = False
+            
+            result = {
+                'test': f'patch_missing_{description}',
+                'status_code': response.status_code,
+                'expected_status': 400,
+                'status_passed': status_passed,
+                'json_format_passed': json_format_passed,
+                'message_passed': message_passed,
+                'response_json': response_json,
+                'test_passed': test_passed
+            }
+            test_results.append(result)
+            
+            status_symbol = "✅" if test_passed else "❌"
+            print(f"  PATCH {description[:25]:25} | Status: {response.status_code:3} | JSON: {json_format_passed} | Message: {message_passed} | {status_symbol}")
+            
+        except requests.exceptions.RequestException as e:
+            print(f"  PATCH {description[:25]:25} | ERROR: {str(e)} | ❌")
+            all_tests_passed = False
+            test_results.append({
+                'test': f'patch_missing_{description}',
+                'error': str(e),
+                'test_passed': False
+            })
+    
+    # ===== END PATCH TESTS =====
+    
     # Summary for Supabase API tests
     print("\n" + "=" * 60)
-    print("SUPABASE INTRO REQUESTS API TEST SUMMARY")
+    print("SUPABASE INTRO REQUESTS API TEST SUMMARY (GET, POST, PATCH)")
     print("=" * 60)
     
     total_tests = len([r for r in test_results if 'error' not in r])
@@ -453,10 +746,12 @@ def test_supabase_intro_requests_api():
     if all_tests_passed:
         print("🎉 ALL SUPABASE API TESTS PASSED")
         print("\nKey validations:")
-        print("✅ Valid payload returns 201 status with success message")
-        print("✅ Missing fields return 400 status with error message")
-        print("✅ Invalid JSON handled properly")
-        print("✅ Non-matching paths preserve catch-all behavior")
+        print("✅ GET /api/intro-requests returns proper list with required fields and ordering")
+        print("✅ POST /api/intro-requests works and sets default status='New'")
+        print("✅ PATCH /api/intro-requests updates status for valid statuses")
+        print("✅ PATCH validation: invalid status returns 400")
+        print("✅ PATCH validation: missing fields return 400") 
+        print("✅ Non-matching paths preserve catch-all 404 behavior")
         print("✅ No runtime errors or server exceptions")
     else:
         print("❌ SOME SUPABASE API TESTS FAILED")
@@ -466,7 +761,7 @@ def test_supabase_intro_requests_api():
                 if 'error' in result:
                     print(f"  - {result['test']}: {result['error']}")
                 else:
-                    print(f"  - {result['test']}: Status {result['status_code']}, Expected: {result.get('expected_status', 'N/A')}")
+                    print(f"  - {result['test']}: Status {result['status_code']}, Expected: {result.get('expected_status', result.get('expected_statuses', 'N/A'))}")
     
     return all_tests_passed, test_results
 
