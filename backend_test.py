@@ -174,6 +174,289 @@ def test_api_route_no_crashes():
         print(f"❌ Unexpected error: {str(e)}")
         return False
 
+def test_session_reports_api():
+    """
+    Test the session reports API endpoint (POST /api/session-reports)
+    """
+    print(f"\nTesting Session Reports API (POST)...")
+    print("=" * 60)
+    
+    session_reports_url = urljoin(API_BASE_URL, 'session-reports')
+    print(f"Testing endpoint: {session_reports_url}")
+    
+    all_tests_passed = True
+    test_results = []
+    
+    print("\n=== POST /api/session-reports Tests ===")
+    print("-" * 50)
+    
+    # Test 1: Valid payload
+    print("1. Testing POST valid session report payload...")
+    valid_payload = {
+        "tutor_name": "Aman Sharma",
+        "parent_name": "Priya Gupta",
+        "subject": "Mathematics", 
+        "topic_cluster": "Algebra Fundamentals",
+        "session_notes": "Student made good progress with quadratic equations. Covered basic concepts and solved 5 practice problems.",
+        "homework": "Complete exercises 1-10 from Chapter 3. Focus on factoring methods.",
+        "session_date": "2024-01-15"
+    }
+    
+    try:
+        response = requests.post(
+            session_reports_url,
+            json=valid_payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+        
+        status_passed = response.status_code == 201
+        
+        try:
+            response_json = response.json()
+            json_format_passed = True
+            
+            expected_message = "Session report submitted successfully."
+            message_passed = response_json.get('message') == expected_message
+            
+        except (json.JSONDecodeError, ValueError):
+            response_json = None
+            json_format_passed = False
+            message_passed = False
+        
+        test_passed = status_passed and json_format_passed and message_passed
+        if not test_passed:
+            all_tests_passed = False
+        
+        result = {
+            'test': 'post_valid_session_report',
+            'status_code': response.status_code,
+            'expected_status': 201,
+            'status_passed': status_passed,
+            'json_format_passed': json_format_passed,
+            'message_passed': message_passed,
+            'response_json': response_json,
+            'test_passed': test_passed
+        }
+        test_results.append(result)
+        
+        status_symbol = "✅" if test_passed else "❌"
+        print(f"  POST valid payload | Status: {response.status_code:3} | JSON: {json_format_passed} | Message: {message_passed} | {status_symbol}")
+        
+        if not test_passed:
+            print(f"    Expected status: 201, Got: {response.status_code}")
+            if response_json:
+                print(f"    Response: {response_json}")
+            else:
+                print(f"    Raw response: {response.text[:200]}")
+                
+    except requests.exceptions.RequestException as e:
+        print(f"  POST valid payload | ERROR: {str(e)} | ❌")
+        all_tests_passed = False
+        test_results.append({
+            'test': 'post_valid_session_report',
+            'error': str(e),
+            'test_passed': False
+        })
+    
+    # Test 2: Missing required fields
+    print("\n2. Testing missing required fields...")
+    print("-" * 40)
+    
+    required_fields = ["tutor_name", "parent_name", "subject", "topic_cluster", "session_notes", "homework", "session_date"]
+    
+    # Test each missing field
+    for missing_field in required_fields:
+        incomplete_payload = valid_payload.copy()
+        del incomplete_payload[missing_field]
+        
+        try:
+            response = requests.post(
+                session_reports_url,
+                json=incomplete_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            status_passed = response.status_code == 400
+            
+            try:
+                response_json = response.json()
+                json_format_passed = True
+                
+                expected_message = "Missing required fields."
+                message_passed = response_json.get('message') == expected_message
+                
+            except (json.JSONDecodeError, ValueError):
+                response_json = None
+                json_format_passed = False
+                message_passed = False
+            
+            test_passed = status_passed and json_format_passed and message_passed
+            if not test_passed:
+                all_tests_passed = False
+            
+            result = {
+                'test': f'missing_field_{missing_field}',
+                'status_code': response.status_code,
+                'expected_status': 400,
+                'status_passed': status_passed,
+                'json_format_passed': json_format_passed,
+                'message_passed': message_passed,
+                'response_json': response_json,
+                'test_passed': test_passed
+            }
+            test_results.append(result)
+            
+            status_symbol = "✅" if test_passed else "❌"
+            print(f"  POST missing {missing_field:15} | Status: {response.status_code:3} | JSON: {json_format_passed} | Message: {message_passed} | {status_symbol}")
+            
+        except requests.exceptions.RequestException as e:
+            print(f"  POST missing {missing_field:15} | ERROR: {str(e)} | ❌")
+            all_tests_passed = False
+            test_results.append({
+                'test': f'missing_field_{missing_field}',
+                'error': str(e),
+                'test_passed': False
+            })
+    
+    # Test 3: Empty string fields
+    print("\n3. Testing empty string fields...")
+    print("-" * 40)
+    
+    for field in required_fields:
+        empty_payload = valid_payload.copy()
+        empty_payload[field] = ""
+        
+        try:
+            response = requests.post(
+                session_reports_url,
+                json=empty_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            status_passed = response.status_code == 400
+            
+            try:
+                response_json = response.json()
+                json_format_passed = True
+                
+                expected_message = "Missing required fields."
+                message_passed = response_json.get('message') == expected_message
+                
+            except (json.JSONDecodeError, ValueError):
+                response_json = None
+                json_format_passed = False
+                message_passed = False
+            
+            test_passed = status_passed and json_format_passed and message_passed
+            if not test_passed:
+                all_tests_passed = False
+            
+            result = {
+                'test': f'empty_field_{field}',
+                'status_code': response.status_code,
+                'expected_status': 400,
+                'status_passed': status_passed,
+                'json_format_passed': json_format_passed,
+                'message_passed': message_passed,
+                'response_json': response_json,
+                'test_passed': test_passed
+            }
+            test_results.append(result)
+            
+            status_symbol = "✅" if test_passed else "❌"
+            print(f"  POST empty {field:17} | Status: {response.status_code:3} | JSON: {json_format_passed} | Message: {message_passed} | {status_symbol}")
+            
+        except requests.exceptions.RequestException as e:
+            print(f"  POST empty {field:17} | ERROR: {str(e)} | ❌")
+            all_tests_passed = False
+            test_results.append({
+                'test': f'empty_field_{field}',
+                'error': str(e),
+                'test_passed': False
+            })
+    
+    # Test 4: Invalid JSON
+    print("\n4. Testing invalid JSON payload...")
+    print("-" * 40)
+    
+    try:
+        response = requests.post(
+            session_reports_url,
+            data="invalid json content",
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+        
+        # Should return some error status (400, 422, or 500)
+        status_passed = response.status_code >= 400
+        
+        try:
+            response_json = response.json()
+            json_format_passed = True
+        except (json.JSONDecodeError, ValueError):
+            response_json = None
+            json_format_passed = False
+        
+        test_passed = status_passed
+        if not test_passed:
+            all_tests_passed = False
+        
+        result = {
+            'test': 'invalid_json',
+            'status_code': response.status_code,
+            'status_passed': status_passed,
+            'json_format_passed': json_format_passed,
+            'response_json': response_json,
+            'test_passed': test_passed
+        }
+        test_results.append(result)
+        
+        status_symbol = "✅" if test_passed else "❌"
+        print(f"  POST invalid JSON     | Status: {response.status_code:3} | JSON: {json_format_passed} | Error handling: {status_passed} | {status_symbol}")
+        
+    except requests.exceptions.RequestException as e:
+        print(f"  POST invalid JSON     | ERROR: {str(e)} | ❌")
+        all_tests_passed = False
+        test_results.append({
+            'test': 'invalid_json',
+            'error': str(e),
+            'test_passed': False
+        })
+    
+    # Summary for Session Reports API tests
+    print("\n" + "=" * 60)
+    print("SESSION REPORTS API TEST SUMMARY")
+    print("=" * 60)
+    
+    total_tests = len([r for r in test_results if 'error' not in r])
+    passed_tests = len([r for r in test_results if r.get('test_passed', False)])
+    
+    print(f"Total Session Reports API tests: {len(test_results)}")
+    print(f"Successful tests: {passed_tests}/{total_tests}")
+    
+    if all_tests_passed:
+        print("🎉 ALL SESSION REPORTS API TESTS PASSED")
+        print("\nKey validations:")
+        print("✅ POST /api/session-reports stores valid payloads and returns 201")
+        print("✅ Missing required fields return 400 with proper error message")
+        print("✅ Empty string fields return 400 with proper error message")  
+        print("✅ Invalid JSON handled gracefully with error status")
+        print("✅ No runtime errors or server exceptions")
+    else:
+        print("❌ SOME SESSION REPORTS API TESTS FAILED")
+        print("\nFailed tests:")
+        for result in test_results:
+            if not result.get('test_passed', False):
+                if 'error' in result:
+                    print(f"  - {result['test']}: {result['error']}")
+                else:
+                    print(f"  - {result['test']}: Status {result['status_code']}, Expected: {result.get('expected_status', 'N/A')}")
+    
+    return all_tests_passed, test_results
+
 def test_supabase_intro_requests_api():
     """
     Test the updated Supabase intro requests API (GET, POST, PATCH)
@@ -775,14 +1058,17 @@ if __name__ == "__main__":
         # Test catch-all API route behavior
         route_tests_passed, results = test_catch_all_api_route()
         
-        # Test Supabase intro requests API
+        # Test session reports API
+        session_reports_passed, session_reports_results = test_session_reports_api()
+        
+        # Test Supabase intro requests API  
         supabase_tests_passed, supabase_results = test_supabase_intro_requests_api()
         
         # Test server stability
         stability_passed = test_api_route_no_crashes()
         
         # Overall result
-        overall_success = route_tests_passed and supabase_tests_passed and stability_passed
+        overall_success = route_tests_passed and session_reports_passed and supabase_tests_passed and stability_passed
         
         print(f"\n{'='*60}")
         print("FINAL RESULT")
@@ -790,9 +1076,21 @@ if __name__ == "__main__":
         
         if overall_success:
             print("🎉 BACKEND TESTING COMPLETE - ALL TESTS PASSED")
+            print("\nAll API endpoints working correctly:")
+            print("✅ Catch-all 404 behavior for unmatched paths")
+            print("✅ POST /api/session-reports (with validation)")
+            print("✅ GET /api/intro-requests (with assigned_tutor field)")
+            print("✅ POST /api/intro-requests (with default status)")
+            print("✅ PATCH /api/intro-requests (status and assigned_tutor updates)")
+            print("✅ Server stability and error handling")
             sys.exit(0)
         else:
             print("❌ BACKEND TESTING COMPLETE - SOME ISSUES FOUND")
+            print("\nResults summary:")
+            print(f"- Catch-all route tests: {'✅ PASSED' if route_tests_passed else '❌ FAILED'}")
+            print(f"- Session reports API: {'✅ PASSED' if session_reports_passed else '❌ FAILED'}")
+            print(f"- Intro requests API: {'✅ PASSED' if supabase_tests_passed else '❌ FAILED'}")
+            print(f"- Server stability: {'✅ PASSED' if stability_passed else '❌ FAILED'}")
             sys.exit(1)
             
     except KeyboardInterrupt:

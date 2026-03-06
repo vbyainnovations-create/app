@@ -1,3 +1,5 @@
+import TutorRequestsTable from "@/components/tutor-requests-table";
+
 const getTutorParam = (rawTutor) => {
   if (Array.isArray(rawTutor)) {
     return (rawTutor[0] || "").trim();
@@ -71,58 +73,7 @@ const App = async ({ searchParams }) => {
       </header>
 
       <section className="container py-6 md:py-8">
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-[980px] w-full border-collapse">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Parent Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Phone
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Class Level
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Subject
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Topic Cluster
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Area
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests?.length > 0 ? (
-                  requests.map((request, index) => (
-                    <tr key={`${request?.phone || "row"}-${index}`} className="border-t border-slate-100">
-                      <td className="px-4 py-3 text-sm text-slate-800">{request?.parent_name || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800">{request?.phone || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800">{request?.class_level || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800">{request?.subject || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800">{request?.topic_cluster || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800">{request?.area || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800">{request?.status || "—"}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">
-                      No Tutor Assigned requests found for this tutor.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <TutorRequestsTable tutorName={tutorName} initialRequests={requests} />
       </section>
     </main>
   );

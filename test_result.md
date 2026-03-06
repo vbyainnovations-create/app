@@ -141,6 +141,18 @@ backend:
         agent: "main"
         comment: "Further extended backend PATCH logic to support assigned_tutor updates and flexible payload updates (status and/or assigned_tutor), plus GET now includes assigned_tutor for admin dashboard."
 
+  - task: "Session reports API for tutor dashboard"
+    implemented: true
+    working: "NA"
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added POST /api/session-reports endpoint to store tutor session reports in Supabase session_reports table with fields tutor_name,parent_name,subject,topic_cluster,session_notes,homework,session_date."
+
 frontend:
   - task: "Mentora homepage UI sections and CTA behavior"
     implemented: true
@@ -193,15 +205,27 @@ frontend:
         agent: "main"
         comment: "Added Assigned Tutor column with Assign Tutor button when empty, tutor badge after assignment, reassignment dropdown with placeholder tutor options, and responsive clean table layout without changing existing status system."
 
+  - task: "Tutor dashboard session report modal"
+    implemented: true
+    working: "NA"
+    file: "app/tutor-dashboard/page.js, components/tutor-requests-table.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Upgraded tutor dashboard with Session Report column and Submit Session Report modal (Topic Covered, Homework Given, Session Notes). On submit calls backend /api/session-reports, closes modal, and shows success message."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 5
+  test_sequence: 6
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Supabase intro request insert API"
+    - "Session reports API for tutor dashboard"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -210,6 +234,8 @@ agent_communication:
   - agent: "main"
     message: "Backend testing agent should validate API route behavior for common HTTP methods and ensure no runtime errors. Frontend testing is intentionally deferred pending user confirmation."
   - agent: "testing"
+  - agent: "main"
+    message: "Please backend-test new POST /api/session-reports flow for required fields validation, successful insert into Supabase session_reports, and ensure existing /api/intro-requests GET/POST/PATCH behavior remains intact with no runtime errors."
     message: "Backend testing completed successfully. Catch-all API route working perfectly - all 25 test cases passed across 5 HTTP methods and 5 different API paths. Created comprehensive backend_test.py for future testing. No critical issues found, no runtime errors, proper JSON responses with 404 status as expected for static homepage phase. Ready for main agent to summarize and finish."
   - agent: "main"
     message: "Please test POST /api/intro-requests Supabase insertion flow with valid payload and invalid payload. Verify status codes, response shape, and confirm no runtime/server errors for this new backend integration."

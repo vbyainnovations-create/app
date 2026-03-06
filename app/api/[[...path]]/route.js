@@ -102,6 +102,91 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   const pathSegments = getPathSegments(params);
 
+  if (pathSegments.length === 1 && pathSegments[0] === "session-reports") {
+    try {
+      const config = getSupabaseConfig();
+
+      if (!config) {
+        return NextResponse.json(
+          { message: "Supabase environment variables are missing." },
+          { status: 500 }
+        );
+      }
+
+      const { supabaseUrl, serviceRoleKey } = config;
+      const payload = await request.json();
+      const tutorName = payload?.tutor_name?.trim?.() || "";
+      const parentName = payload?.parent_name?.trim?.() || "";
+      const subject = payload?.subject?.trim?.() || "";
+      const topicCluster = payload?.topic_cluster?.trim?.() || "";
+      const sessionNotes = payload?.session_notes?.trim?.() || "";
+      const homework = payload?.homework?.trim?.() || "";
+      const sessionDate = payload?.session_date || "";
+
+      if (
+        !tutorName ||
+        !parentName ||
+        !subject ||
+        !topicCluster ||
+        !sessionNotes ||
+        !homework ||
+        !sessionDate
+      ) {
+        return NextResponse.json(
+          { message: "Missing required fields." },
+          { status: 400 }
+        );
+      }
+
+      const supabaseResponse = await fetch(
+        `${supabaseUrl}/rest/v1/session_reports`,
+        {
+          method: "POST",
+          headers: {
+            apikey: serviceRoleKey,
+            Authorization: `Bearer ${serviceRoleKey}`,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            tutor_name: tutorName,
+            parent_name: parentName,
+            subject,
+            topic_cluster: topicCluster,
+            session_notes: sessionNotes,
+            homework,
+            session_date: sessionDate,
+          }),
+        }
+      );
+
+      if (!supabaseResponse.ok) {
+        const errorText = await supabaseResponse.text();
+
+        return NextResponse.json(
+          {
+            message: "Failed to store session report.",
+            details: errorText || "Unknown Supabase error.",
+          },
+          { status: 502 }
+        );
+      }
+
+      return NextResponse.json(
+        { message: "Session report submitted successfully." },
+        { status: 201 }
+      );
+    } catch (error) {
+      return NextResponse.json(
+        {
+          message: "Unexpected error while storing session report.",
+          details: error?.message || "Unknown error",
+        },
+        { status: 500 }
+      );
+    }
+  }
+
   if (pathSegments.length === 1 && pathSegments[0] === "intro-requests") {
     try {
       const config = getSupabaseConfig();
