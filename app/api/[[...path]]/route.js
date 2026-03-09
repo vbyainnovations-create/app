@@ -40,6 +40,70 @@ const tutorOptions = [
   "Veena Gupta",
 ];
 
+const incrementSessionsCompletedForParent = async ({
+  supabaseUrl,
+  serviceRoleKey,
+  parentName,
+}) => {
+  const query = new URLSearchParams({
+    select: "id,sessions_completed",
+    parent_name: `eq.${parentName}`,
+  });
+
+  const fetchRowsResponse = await fetch(
+    `${supabaseUrl}/rest/v1/intro_requests?${query.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (!fetchRowsResponse.ok) {
+    const errorText = await fetchRowsResponse.text();
+    throw new Error(errorText || "Failed to fetch intro requests for increment.");
+  }
+
+  const introRequests = await fetchRowsResponse.json();
+
+  if (!Array.isArray(introRequests) || introRequests.length === 0) {
+    return 0;
+  }
+
+  for (const introRequest of introRequests) {
+    const nextCount = Number(introRequest?.sessions_completed || 0) + 1;
+    const idValue = String(introRequest?.id || "");
+
+    if (!idValue) {
+      continue;
+    }
+
+    const updateResponse = await fetch(
+      `${supabaseUrl}/rest/v1/intro_requests?id=eq.${encodeURIComponent(idValue)}`,
+      {
+        method: "PATCH",
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({ sessions_completed: nextCount }),
+      }
+    );
+
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text();
+      throw new Error(errorText || "Failed to increment sessions_completed.");
+    }
+  }
+
+  return introRequests.length;
+};
+
 export async function GET(request, { params }) {
   const pathSegments = getPathSegments(params);
 
@@ -171,6 +235,12 @@ export async function POST(request, { params }) {
           { status: 502 }
         );
       }
+
+      await incrementSessionsCompletedForParent({
+        supabaseUrl,
+        serviceRoleKey,
+        parentName,
+      });
 
       return NextResponse.json(
         { message: "Session report submitted successfully." },
