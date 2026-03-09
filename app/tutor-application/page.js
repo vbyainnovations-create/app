@@ -283,6 +283,32 @@ const App = () => {
     }
   };
 
+
+  if (successMessage) {
+    return (
+      <main className="bg-background text-foreground">
+        <section className="container flex min-h-[80vh] items-center justify-center py-16">
+          <Card className="w-full max-w-2xl border-slate-200 shadow-sm">
+            <CardContent className="p-8 text-center md:p-10">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
+                Application Submitted Successfully
+              </h1>
+              <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-slate-600 md:text-base">
+                Thank you for applying to join Mentora Edutors. Your application
+                has been successfully submitted. Our team will review your
+                details and contact you shortly to proceed with the verification
+                process.
+              </p>
+              <Button asChild className="mt-8 bg-slate-900 hover:bg-slate-800">
+                <Link href="/">Return to Homepage</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur">
