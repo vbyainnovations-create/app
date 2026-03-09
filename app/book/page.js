@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Script from "next/script";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,20 +58,6 @@ const paymentPackages = [
   { id: "ten-session-package", label: "10 Sessions Package", amount: 7600 },
 ];
 
-const loadRazorpayScript = async () => {
-  if (typeof window === "undefined") return false;
-  if (window.Razorpay) return true;
-
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
 const getPackageById = (id) => {
   return paymentPackages.find((item) => item.id === id) || paymentPackages[0];
 };
@@ -92,6 +79,7 @@ const App = () => {
   const [selectedPackageId, setSelectedPackageId] = useState(
     paymentPackages[0].id
   );
+  const razorpayPublicKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
 
   const availableSubjects = useMemo(() => {
     return subjectMap[selectedClassType] || [];
@@ -175,10 +163,12 @@ const App = () => {
       try {
         setIsSubmitting(true);
 
-        const loaded = await loadRazorpayScript();
+        if (typeof window === "undefined" || !window.Razorpay) {
+          throw new Error("Razorpay SDK not loaded");
+        }
 
-        if (!loaded) {
-          throw new Error("Razorpay SDK failed to load");
+        if (!razorpayPublicKey) {
+          throw new Error("Missing NEXT_PUBLIC_RAZORPAY_KEY_ID");
         }
 
         const selectedPackage = getPackageById(selectedPackageId);
@@ -202,7 +192,7 @@ const App = () => {
         }
 
         const razorpay = new window.Razorpay({
-          key: orderData.key_id,
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           amount: orderData.amount,
           currency: orderData.currency,
           name: "Mentora Edutors",
@@ -307,7 +297,12 @@ const App = () => {
   }
 
   return (
-    <main className="bg-background">
+    <>
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="beforeInteractive"
+      />
+      <main className="bg-background">
       <section className="container py-8 md:py-12">
         <Link
           href="/"
@@ -558,7 +553,8 @@ const App = () => {
           </CardContent>
         </Card>
       </section>
-    </main>
+      </main>
+    </>
   );
 };
 
