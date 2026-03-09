@@ -233,15 +233,40 @@ frontend:
         agent: "main"
         comment: "Upgraded tutor dashboard with Session Report column and Submit Session Report modal (Topic Covered, Homework Given, Session Notes). On submit calls backend /api/session-reports, closes modal, and shows success message."
 
+
+  - task: "Tutor application secure document upload APIs"
+    implemented: true
+    working: "NA"
+    file: "app/api/tutor-documents/upload-chunk/route.js, app/api/tutor-documents/complete-upload/route.js, app/api/tutor-applications/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added chunked upload APIs for tutor documents, secure Supabase storage finalization to bucket tutor-documents, and tutor application metadata submission API to table tutor_applications."
+
+  - task: "Tutor application Step 2 identity verification UI"
+    implemented: true
+    working: "NA"
+    file: "app/tutor-application/page.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added Step 2 Identity Verification with required document uploads (Aadhaar front/back, PAN, Live Selfie), address+pincode, progress indicators, and Submit Application flow. Apply as Tutor button on homepage links to /tutor-application."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 7
+  test_sequence: 8
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Razorpay payment order and verification API"
+    - "Tutor application secure document upload APIs"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -261,6 +286,8 @@ agent_communication:
     message: "Please retest backend for updated /api/intro-requests endpoints: GET list with status/id, POST default status='New', PATCH status update validation and persistence for allowed statuses. Confirm unsupported paths still return 404 and no runtime errors."
 
   - agent: "main"
+  - agent: "main"
+    message: "Please backend-test new tutor application endpoints: POST /api/tutor-documents/upload-chunk (multipart chunk save), POST /api/tutor-documents/complete-upload (chunk merge + secure Supabase storage upload), and POST /api/tutor-applications (metadata insert). Validate required field errors and non-matching paths behavior. Ensure no runtime crashes."
     message: "Please backend-test tutor assignment enhancements: GET /api/intro-requests should include assigned_tutor field, PATCH should support assigned_tutor updates (including reassignment) and still support status updates. Validate invalid tutor values fail, and non-matching paths still return 404 with no runtime errors."
   - agent: "main"
     message: "Please backend-test Razorpay integration endpoints: POST /api/payments/create-order, /api/payments/verify (signature validation + Paid logging), /api/payments/failed (Failed logging), and ensure /api/intro-requests + /api/session-reports existing flows still work without runtime errors."
