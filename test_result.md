@@ -153,6 +153,19 @@ backend:
         agent: "main"
         comment: "Added POST /api/session-reports endpoint to store tutor session reports in Supabase session_reports table with fields tutor_name,parent_name,subject,topic_cluster,session_notes,homework,session_date."
 
+
+  - task: "Razorpay payment order and verification API"
+    implemented: true
+    working: "NA"
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added POST /api/payments/create-order, /api/payments/verify, and /api/payments/failed for Razorpay checkout integration with signature verification and payment row storage in Supabase payments table (Paid/Failed)."
+
 frontend:
   - task: "Mentora homepage UI sections and CTA behavior"
     implemented: true
@@ -180,6 +193,9 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Wired Step 5 submit button to call backend POST /api/intro-requests while keeping UI layout unchanged and preserving success confirmation state after successful response."
+      - working: "NA"
+        agent: "main"
+        comment: "Upgraded Step 5 to show payment card after booking save, package selection (₹800/₹7600), and Proceed to Payment flow with Razorpay checkout trigger."
 
   - task: "Admin dashboard status dropdown and badge UI"
     implemented: true
@@ -220,12 +236,12 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 6
+  test_sequence: 7
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Session reports API for tutor dashboard"
+    - "Razorpay payment order and verification API"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -246,3 +262,5 @@ agent_communication:
 
   - agent: "main"
     message: "Please backend-test tutor assignment enhancements: GET /api/intro-requests should include assigned_tutor field, PATCH should support assigned_tutor updates (including reassignment) and still support status updates. Validate invalid tutor values fail, and non-matching paths still return 404 with no runtime errors."
+  - agent: "main"
+    message: "Please backend-test Razorpay integration endpoints: POST /api/payments/create-order, /api/payments/verify (signature validation + Paid logging), /api/payments/failed (Failed logging), and ensure /api/intro-requests + /api/session-reports existing flows still work without runtime errors."

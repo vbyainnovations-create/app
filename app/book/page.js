@@ -52,6 +52,30 @@ const subjectMap = {
   ],
 };
 
+const paymentPackages = [
+  { id: "single-session", label: "1 Session", amount: 800 },
+  { id: "ten-session-package", label: "10 Sessions Package", amount: 7600 },
+];
+
+const loadRazorpayScript = async () => {
+  if (typeof window === "undefined") return false;
+  if (window.Razorpay) return true;
+
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+const getPackageById = (id) => {
+  return paymentPackages.find((item) => item.id === id) || paymentPackages[0];
+};
+
+
 const App = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedClassType, setSelectedClassType] = useState("");
@@ -64,6 +88,10 @@ const App = () => {
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isBookingSaved, setIsBookingSaved] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] = useState(
+    paymentPackages[0].id
+  );
 
   const availableSubjects = useMemo(() => {
     return subjectMap[selectedClassType] || [];
@@ -87,6 +115,10 @@ const App = () => {
     if (currentStep === 3) return Boolean(selectedCluster);
     if (currentStep === 4) return true;
 
+    if (isBookingSaved) {
+      return Boolean(selectedPackageId);
+    }
+
     return Boolean(
       formData.parentName.trim() &&
         formData.phoneNumber.trim() &&
@@ -103,7 +135,7 @@ const App = () => {
   const handleNext = async () => {
     if (!canMoveNext()) return;
 
-    if (currentStep === 5) {
+    if (currentStep === 5 && !isBookingSaved) {
       try {
         setIsSubmitting(true);
 
@@ -127,11 +159,111 @@ const App = () => {
           throw new Error("Failed to submit booking request");
         }
 
-        setIsSubmitted(true);
+        setIsBookingSaved(true);
       } catch (error) {
         window.alert(
           "We couldn't submit your request right now. Please try again."
         );
+      } finally {
+        setIsSubmitting(false);
+      }
+
+      return;
+    }
+
+    if (currentStep === 5 && isBookingSaved) {
+      try {
+        setIsSubmitting(true);
+
+        const loaded = await loadRazorpayScript();
+
+        if (!loaded) {
+          throw new Error("Razorpay SDK failed to load");
+        }
+
+        const selectedPackage = getPackageById(selectedPackageId);
+
+        const createOrderResponse = await fetch("/api/payments/create-order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            parent_name: formData.parentName,
+            phone: formData.phoneNumber,
+            amount: selectedPackage.amount,
+          }),
+        });
+
+        const orderData = await createOrderResponse.json();
+
+        if (!createOrderResponse.ok) {
+          throw new Error(orderData?.message || "Unable to create payment order");
+        }
+
+        const razorpay = new window.Razorpay({
+          key: orderData.key_id,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: "Mentora Edutors",
+          description: selectedPackage.label,
+          order_id: orderData.order_id,
+          handler: async (responsePayload) => {
+            try {
+              const verifyResponse = await fetch("/api/payments/verify", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  parent_name: formData.parentName,
+                  phone: formData.phoneNumber,
+                  amount: selectedPackage.amount,
+                  razorpay_order_id: responsePayload?.razorpay_order_id,
+                  razorpay_payment_id: responsePayload?.razorpay_payment_id,
+                  razorpay_signature: responsePayload?.razorpay_signature,
+                }),
+              });
+
+              if (!verifyResponse.ok) {
+                throw new Error("Payment verification failed");
+              }
+
+              setIsSubmitted(true);
+            } catch {
+              window.alert("Payment verification failed. Please contact support.");
+            }
+          },
+          prefill: {
+            name: formData.parentName,
+            contact: formData.phoneNumber,
+          },
+          theme: {
+            color: "#0f172a",
+          },
+        });
+
+        razorpay.on("payment.failed", async (failureData) => {
+          await fetch("/api/payments/failed", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              parent_name: formData.parentName,
+              phone: formData.phoneNumber,
+              amount: selectedPackage.amount,
+              payment_id:
+                failureData?.error?.metadata?.payment_id ||
+                failureData?.error?.metadata?.razorpay_payment_id ||
+                "",
+            }),
+          });
+        });
+
+        razorpay.open();
+      } catch {
+        window.alert("Unable to start payment. Please try again.");
       } finally {
         setIsSubmitting(false);
       }
@@ -322,7 +454,7 @@ const App = () => {
               </div>
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 5 && !isBookingSaved && (
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="parentName">Parent Name</Label>
@@ -371,6 +503,35 @@ const App = () => {
               </div>
             )}
 
+            {currentStep === 5 && isBookingSaved && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 md:p-5">
+                <p className="text-sm font-medium text-slate-700">Payment Options</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {paymentPackages.map((pkg) => {
+                    const active = selectedPackageId === pkg.id;
+
+                    return (
+                      <button
+                        key={pkg.id}
+                        type="button"
+                        onClick={() => setSelectedPackageId(pkg.id)}
+                        className={`rounded-lg border bg-white p-4 text-left transition-all ${
+                          active
+                            ? "border-slate-900 ring-1 ring-slate-900"
+                            : "border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        <p className="text-sm font-semibold text-slate-900">{pkg.label}</p>
+                        <p className="mt-1 text-lg font-semibold text-emerald-700">
+                          ₹{pkg.amount}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-between">
               <Button
                 type="button"
@@ -387,7 +548,11 @@ const App = () => {
                 disabled={!canMoveNext() || isSubmitting}
                 className="bg-slate-900 hover:bg-slate-800"
               >
-                {currentStep === 5 ? "Submit Booking Request" : "Continue"}
+                {currentStep === 5
+                  ? isBookingSaved
+                    ? "Proceed to Payment"
+                    : "Submit Booking Request"
+                  : "Continue"}
               </Button>
             </div>
           </CardContent>
