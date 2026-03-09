@@ -1,61 +1,37 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 
-const getRazorpayClient = () => {
-  const keyId = process.env.RAZORPAY_KEY_ID?.trim();
-  const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
-
-  if (!keyId || !keySecret) {
-    return null;
-  }
-
-  return new Razorpay({
-    key_id: keyId,
-    key_secret: keySecret,
-  });
-};
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 export async function POST(request) {
   try {
     const payload = await request.json();
-    const amountInRupees = Number(payload?.amount || 0);
+    const amount = Number(payload?.amount || 0);
 
-    if (!amountInRupees || amountInRupees <= 0) {
+    if (!amount || amount <= 0) {
       return NextResponse.json(
-        { message: "Invalid amount for order creation." },
+        { message: "Invalid amount." },
         { status: 400 }
       );
     }
 
-    const client = getRazorpayClient();
-
-    if (!client) {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       return NextResponse.json(
-        { message: "Razorpay environment variables are missing." },
+        { message: "Razorpay credentials are missing." },
         { status: 500 }
       );
     }
 
-    const amount = Math.round(amountInRupees * 100);
-    const receipt = `mentora_${Date.now()}_${Math.floor(Math.random() * 1000)}`.slice(
-      0,
-      40
-    );
-
-    const order = await client.orders.create({
-      amount,
+    const order = await razorpay.orders.create({
+      amount: amount * 100,
       currency: "INR",
-      receipt,
+      receipt: `mentora_${Date.now()}`,
     });
 
-    return NextResponse.json(
-      {
-        order_id: order.id,
-        amount: order.amount,
-        currency: order.currency,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({ order_id: order.id }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       {
