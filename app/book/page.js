@@ -173,7 +173,7 @@ const App = () => {
 
         const selectedPackage = getPackageById(selectedPackageId);
 
-        const createOrderResponse = await fetch("/api/payments/create-order", {
+        const createOrderResponse = await fetch("/api/create-order", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
