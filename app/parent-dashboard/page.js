@@ -45,6 +45,58 @@ const fetchParentReports = async (parentName) => {
   }
 };
 
+const fetchSessionPackageProgress = async (parentName) => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey || !parentName) {
+    return { totalSessions: 0, completedSessions: 0, remainingSessions: 0 };
+  }
+
+  const params = new URLSearchParams({
+    select: "total_sessions,sessions_completed,parent_name",
+  });
+
+  params.append("parent_name", `ilike.${parentName}`);
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/intro_requests?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      return { totalSessions: 0, completedSessions: 0, remainingSessions: 0 };
+    }
+
+    const data = await response.json();
+    const rows = Array.isArray(data) ? data : [];
+
+    const totalSessions = rows.reduce(
+      (sum, row) => sum + Number(row?.total_sessions || 0),
+      0
+    );
+
+    const completedSessions = rows.reduce(
+      (sum, row) => sum + Number(row?.sessions_completed || 0),
+      0
+    );
+
+    const remainingSessions = Math.max(totalSessions - completedSessions, 0);
+
+    return { totalSessions, completedSessions, remainingSessions };
+  } catch {
+    return { totalSessions: 0, completedSessions: 0, remainingSessions: 0 };
+  }
+};
+
 const formatDateTime = (value) => {
   if (!value) return "—";
 
@@ -72,7 +124,10 @@ const App = async ({ searchParams }) => {
     );
   }
 
-  const reports = await fetchParentReports(parentName);
+  const [reports, sessionProgress] = await Promise.all([
+    fetchParentReports(parentName),
+    fetchSessionPackageProgress(parentName),
+  ]);
 
   return (
     <main className="bg-background">
@@ -85,6 +140,32 @@ const App = async ({ searchParams }) => {
       </header>
 
       <section className="container py-6 md:py-8">
+        <div className="mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+            Session Package Progress
+          </h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">Total Sessions</p>
+              <p className="mt-1 text-xl font-semibold text-slate-900">
+                {sessionProgress?.totalSessions ?? 0}
+              </p>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">Completed</p>
+              <p className="mt-1 text-xl font-semibold text-slate-900">
+                {sessionProgress?.completedSessions ?? 0}
+              </p>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">Remaining</p>
+              <p className="mt-1 text-xl font-semibold text-slate-900">
+                {sessionProgress?.remainingSessions ?? 0}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-[980px] w-full border-collapse">
