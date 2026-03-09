@@ -326,10 +326,11 @@ const App = () => {
             </div>
 
             <Button
+              asChild
               variant="outline"
               className="border-slate-300 bg-white text-slate-900 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-900 hover:bg-slate-50"
             >
-              Apply as Tutor
+              <Link href="/tutor-application">Apply as Tutor</Link>
             </Button>
           </div>
         </div>
