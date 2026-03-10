@@ -136,11 +136,11 @@ const App = () => {
           </div>
 
           <Button
+            asChild
             variant="outline"
             className="ml-2 shrink-0 border-emerald-700/30 px-3 text-xs text-emerald-800 transition-all duration-300 hover:border-emerald-700 hover:bg-emerald-50 sm:ml-0 sm:px-4 sm:text-sm"
-            disabled
           >
-            Book Free Intro Session
+            <Link href="/book">Book Free Intro Session</Link>
           </Button>
         </div>
       </header>
@@ -173,12 +173,12 @@ const App = () => {
               </Button>
 
               <Button
+                asChild
                 size="lg"
                 variant="outline"
                 className="min-w-[210px] border-emerald-700/30 text-emerald-800 transition-all duration-300 hover:bg-emerald-50"
-                disabled
               >
-                Book Free Intro Session
+                <Link href="/book">Book Free Intro Session</Link>
               </Button>
             </div>
 
